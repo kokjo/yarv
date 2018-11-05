@@ -50,7 +50,7 @@ module fetch_tb();
     always clk = #1 !clk;
 
     initial begin
-        $dumpfile("fetch_tb.vcd");
+        $dumpfile("testbench.vcd");
         $dumpvars;
         #4
         rst = 0;

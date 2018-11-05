@@ -1,5 +1,7 @@
 a.out
+testbench
 *.vcd
 *.o
 *.elf
 *.bin
+rom.v
