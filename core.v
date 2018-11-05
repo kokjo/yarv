@@ -32,7 +32,7 @@ module core (
         .mem0_ready(mem0_ready),
         .mem0_addr(mem0_addr),
         .mem0_rdata(mem0_rdata),
-        .mem0_wdata(32'hxxxxxxxx),
+        .mem0_wdata(32'h00000000),
         .mem0_wstrb(4'b0000),
 
         .mem1_valid(mem1_valid),

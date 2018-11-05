@@ -1,10 +1,9 @@
 .section .text
 _start:
-li x4, 1
-li x5, 0
+li x1, 0x01000000
 loop:
-    mv x6, x4
-    add x4, x4, x5
-    mv x5, x6
-    sw x4, 0(x0)
+    mv x4, x0
+    lw x4, 0(x1)
+    addi x4, x4, 1
+    sw x4, 0(x1)
     jal x0, loop

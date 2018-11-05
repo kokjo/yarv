@@ -1,7 +1,10 @@
 a.out
 testbench
+rom.v
 *.vcd
 *.o
 *.elf
 *.bin
-rom.v
+*.asc
+*.blif
+*.time

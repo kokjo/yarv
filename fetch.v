@@ -51,7 +51,6 @@ module programcounter (
     input override;
     input [31:0] newpc;
     output reg [31:0] pc;
-    output [31:0] next_pc;
 
     parameter RESET_PC = 32'h00000000;
 
