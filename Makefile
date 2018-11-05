@@ -23,3 +23,6 @@ firmware.elf: firmware.o
 
 firmware.o: firmware.s
 	$(CC) -o firmware.o -c firmware.s
+
+clean:
+	rm -rf *.vcd *.bin *.elf *.o testbench rom.v
