@@ -26,7 +26,7 @@ module soc (
     flash_io2_di,
     flash_io3_di
 );
-    parameter RAM_DEPTH = 10;
+    parameter RAM_DEPTH = 8;
     parameter RESET_PC = 32'h00050000;
     localparam RAM_WORDS = 1 << RAM_DEPTH;
 

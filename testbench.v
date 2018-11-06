@@ -1,4 +1,4 @@
-module fetch_tb();
+module testbench();
     reg clk = 1;
     reg rst = 1;
 
@@ -6,18 +6,26 @@ module fetch_tb();
     wire [31:0] mem_wdata;
     wire [3:0] mem_wstrb;
 
-    wire rom_valid = mem_valid && mem_addr[31:24] == 8'h00;
+    wire rom_valid = mem_valid && mem_addr[31:16] == 16'h0005;
     wire rom_ready;
     wire [31:0] rom_rdata;
 
-    wire ram_valid = mem_valid && mem_addr[31:24] == 8'h01;
+    wire ram_valid = mem_valid && mem_addr[31:16] == 16'h0000;
     wire ram_ready;
     wire [31:0] ram_rdata;
 
+    wire gpio_valid = mem_valid && mem_addr[31:16] == 16'h0300;
+    wire gpio_ready;
+    wire [31:0] gpio_rdata;
+
     wire [31:0] mem_rdata = rom_valid ? rom_rdata
                           : ram_valid ? ram_rdata
+                          : gpio_valid ? gpio_rdata
                           : 32'h00000000;
-    wire mem_ready = (rom_valid && rom_ready) || (ram_valid && ram_ready);
+
+    wire mem_ready = (rom_valid & rom_ready)
+                   | (ram_valid & ram_ready)
+                   | (gpio_valid & gpio_ready);
 
     rom rom0 (
         .clk(clk),
@@ -37,7 +45,9 @@ module fetch_tb();
         .mem_wstrb(mem_wstrb)
     );
 
-    core core (
+    core #(
+        .RESET_PC(32'h00050000)
+    ) core (
         .clk(clk), .rst(rst),
         .mem_valid(mem_valid),
         .mem_ready(mem_ready),
@@ -45,6 +55,24 @@ module fetch_tb();
         .mem_rdata(mem_rdata),
         .mem_wdata(mem_wdata),
         .mem_wstrb(mem_wstrb)
+    );
+
+    wire [31:0] gpio_oe;
+    wire [31:0] gpio_do;
+    wire [31:0] gpio_di;
+
+    mem_gpio gpio (
+        .clk(clk), .rst(rst),
+        .mem_valid(gpio_valid),
+        .mem_ready(gpio_ready),
+        .mem_addr(mem_addr),
+        .mem_rdata(gpio_rdata),
+        .mem_wdata(mem_wdata),
+        .mem_wstrb(mem_wstrb),
+
+        .gpio_oe(gpio_oe),
+        .gpio_do(gpio_do),
+        .gpio_di(gpio_di)
     );
 
     always clk = #1 !clk;

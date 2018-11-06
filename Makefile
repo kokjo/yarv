@@ -2,8 +2,8 @@ CC=riscv32-unknown-elf-gcc
 LD=riscv32-unknown-elf-ld
 OBJCOPY=riscv32-unknown-elf-objcopy
 IVERILOG=iverilog
-HARDWARE=hardware.v soc.v
-SOURCES=ram.v rom.v fetch.v decode.v execute.v cache.v arb.v core.v spimemio.v
+HARDWARE=hardware.v soc.v spimemio.v
+SOURCES=ram.v rom.v fetch.v decode.v execute.v cache.v arb.v core.v mem_gpio.v
 TESTBENCH=testbench.v
 
 all: hardware.asc testbench.vcd hardware.bin
@@ -20,11 +20,8 @@ rom.v: firmware.bin generate_rom.py
 firmware.bin: firmware.elf
 	$(OBJCOPY) -O binary firmware.elf firmware.bin
 
-firmware.elf: firmware.o
-	$(LD) -o firmware.elf firmware.o
-
-firmware.o: firmware.s
-	$(CC) -o firmware.o -c firmware.s
+firmware.elf: sections.lds firmware.c start.S
+	$(CC) -march=rv32i -nostartfiles -Wl,-Bstatic,-T,sections.lds,--strip-debug,-Map=firmware.map,--cref -ffreestanding -nostdlib -o firmware.elf start.S firmware.c
 
 hardware.blif: $(SOURCES)
 	yosys -p 'synth_ice40 -top hardware -blif hardware.blif' $(HARDWARE) $(SOURCES) 

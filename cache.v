@@ -1,11 +1,10 @@
-module cache (
+module icache (
     clk, rst,
     cache_flush,
     cache_valid, cache_ready, cache_addr, cache_rdata,
     mem_valid, mem_ready, mem_addr, mem_rdata
-    
 );
-    parameter DEPTH = 6;
+    parameter DEPTH = 8;
     localparam WORDS = 1 << DEPTH;
 
     input clk, rst;
@@ -49,3 +48,19 @@ module cache (
         end
     end
 endmodule
+
+/*
+module dcache (
+    clk, rst,
+    cache_flush,
+    cache_valid, cache_ready,
+    cache_addr, cache_rdata,
+    cache_wdata, cache_wstrb,
+    
+    mem_valid, mem_ready,
+    mem_addr, mem_rdata,
+    mem_wdata, mem_wstrb
+);
+
+endmodule
+*/

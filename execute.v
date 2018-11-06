@@ -101,6 +101,10 @@ module execute (
         .result(mem_result)
     );
 
+    system sys (
+        .clk(clk), .hlt(hlt), .rst(rst)
+    );
+
     assign newpc = alu_result;
     assign override = (flush == 0) & ((branch & branch_taken) | jal | jalr);
     assign fault = (flush == 0) & invalid;

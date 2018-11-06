@@ -26,7 +26,9 @@ module fetch(
     parameter RESET_PC = 32'h00000000;
     parameter RESET_INSTRUCTION = 32'h00000000;
 
-    programcounter pc0 (
+    programcounter #(
+        .RESET_PC(RESET_PC)
+    ) pc0 (
         .clk(clk), .rst(rst), .hlt(hlt),
         .override(override), .newpc(newpc),
         .pc(pc)

@@ -58,7 +58,7 @@ module core (
     wire [31:0] icache_addr;
     wire [31:0] icache_rdata;
 
-    cache icache(
+    icache icache(
         .clk(clk), .rst(rst),
         .cache_flush(icache_flush),
         .cache_valid(icache_valid),

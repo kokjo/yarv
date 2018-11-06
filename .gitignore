@@ -8,3 +8,4 @@ rom.v
 *.asc
 *.blif
 *.rpt
+*.map

@@ -18,7 +18,7 @@ module ram (
     reg [31:0] memory [WORDS-1:0];
     integer i;
 
-//    initial for(i = 0; i < WORDS; i = i + 1) memory[i] <= 32'h00000000;
+    initial for(i = 0; i < WORDS; i = i + 1) memory[i] <= 32'h00000000;
 
     wire [DEPTH-1: 0] addr = mem_addr[DEPTH-1 + 2: 2];
     

@@ -29,11 +29,13 @@ module rom (
 ##ROM##
     end
 
+    wire [DEPTH-1:0] addr = mem_addr[DEPTH-1+2:2];
+
     always @(posedge clk) begin
         mem_ready <= 0;
         if(mem_valid && !mem_ready) begin
             mem_ready <= 1;
-            mem_rdata <= rom[mem_addr >> 2];
+            mem_rdata <= rom[addr];
         end
     end
 endmodule"""
