@@ -1,12 +1,15 @@
 module cache (
     clk, rst,
+    cache_flush,
     cache_valid, cache_ready, cache_addr, cache_rdata,
     mem_valid, mem_ready, mem_addr, mem_rdata
+    
 );
     parameter DEPTH = 6;
     localparam WORDS = 1 << DEPTH;
 
     input clk, rst;
+    input cache_flush;
 
     input cache_valid;
     output cache_ready;
@@ -34,6 +37,7 @@ module cache (
     always @ (posedge clk) if(rst) begin
         valid <= 0;
     end else begin
+        if(cache_flush) valid <= 0;
         if(do_fetch) begin
             mem_valid <= 1;
             if(mem_ready) begin

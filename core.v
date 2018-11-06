@@ -4,6 +4,8 @@ module core (
     mem_addr, mem_rdata,
     mem_wdata, mem_wstrb,
 );
+    parameter RESET_PC = 32'h00000000;
+
     input clk, rst;
     output reg fault;
 
@@ -50,6 +52,7 @@ module core (
         .mem_wstrb(mem_wstrb)
     );
 
+    wire icache_flush;
     wire icache_valid;
     wire icache_ready;
     wire [31:0] icache_addr;
@@ -57,6 +60,7 @@ module core (
 
     cache icache(
         .clk(clk), .rst(rst),
+        .cache_flush(icache_flush),
         .cache_valid(icache_valid),
         .cache_ready(icache_ready),
         .cache_addr(icache_addr),
@@ -76,7 +80,9 @@ module core (
     wire [31:0] instruction;
     wire [31:0] fetch_pc;
 
-    fetch fetcher (
+    fetch #(
+        .RESET_PC(RESET_PC)
+    ) fetcher (
         .clk(clk), .rst(rst), .hlt(hlt),
         .override(override), .newpc(newpc),
         .mem_valid(icache_valid),
@@ -96,7 +102,8 @@ module core (
     wire [6:0] funct7;
     wire load, fence, alui, auipc;
     wire store, alur, lui, branch;
-    wire jalr, jal, invalid, unknown;
+    wire jalr, jal, system;
+    wire invalid, unknown;
     wire [31:0] execute_pc;
 
     decode decoder (
@@ -107,7 +114,8 @@ module core (
         .rd(rd), .funct3(funct3), .rs1(rs1), .rs2(rs2), .funct7(funct7),
         .load(load), .fence(fence), .alui(alui), .auipc(auipc),
         .store(store), .alur(alur), .lui(lui), .branch(branch),
-        .jalr(jalr), .jal(val), .invalid(invalid), .unknown(unknown),
+        .jalr(jalr), .jal(val), .system(system),
+        .invalid(invalid), .unknown(unknown),
         .outpc(execute_pc)
     );
 
@@ -118,7 +126,8 @@ module core (
         .rd(rd), .funct3(funct3), .rs1(rs1), .rs2(rs2), .funct7(funct7),
         .load(load), .fence(fence), .alui(alui), .auipc(auipc),
         .store(store), .alur(alur), .lui(lui), .branch(branch),
-        .jalr(jalr), .jal(val), .invalid(invalid), .unknown(unknown),
+        .jalr(jalr), .jal(val), .system(system),
+        .invalid(invalid), .unknown(unknown),
         .inpc(execute_pc),
         
         .override(override),
@@ -131,6 +140,8 @@ module core (
         .mem_wdata(mem1_wdata),
         .mem_wstrb(mem1_wstrb)
     );
+
+    assign icache_flush = fence;
 
     always @ (posedge clk) if(rst) begin
         fault <= 0;

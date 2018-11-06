@@ -11,7 +11,9 @@ module decode (
     // individual opcodes
     load, fence, alui, auipc,
     store, alur, lui, branch,
-    jalr, jal, invalid, unknown,
+    jalr, jal, system,
+    // fault signals
+    invalid, unknown,
     // pc for next stage
     outpc
 );
@@ -28,12 +30,14 @@ module decode (
     output reg [6:0] funct7;
     output reg load, fence, alui, auipc;
     output reg store, alur, lui, branch;
-    output reg jalr, jal, invalid, unknown;
+    output reg jalr, jal, system;
+    output reg invalid, unknown;
     output reg [31:0] outpc;
 
     wire load_w, fence_w, alui_w, auipc_w;
     wire store_w, alur_w, lui_w, branch_w;
-    wire jalr_w, jal_w, invalid_w, unknown_w;
+    wire jalr_w, jal_w, system_w;
+    wire invalid_w, unknown_w;
 
     wire r, i, s, b, u, j;
 
@@ -42,7 +46,8 @@ module decode (
         .r(r), .i(i), .s(s), .b(b), .u(u), .j(j),
         .load(load_w), .fence(fence_w), .alui(alui_w), .auipc(auipc_w),
         .store(store_w), .alur(alur_w), .lui(lui_w), .branch(branch_w),
-        .jalr(jalr_w), .jal(jal_w), .invalid(invalid_w), .unknown(unknown_w)
+        .jalr(jalr_w), .jal(jal_w), .system(system_w),
+        .invalid(invalid_w), .unknown(unknown_w)
     );
     
     wire [31:0] inst = instruction;
@@ -69,7 +74,8 @@ module decode (
         rs1 <= 5'd0; rs2 <= 5'd0; funct7 <= 7'd0;
         load <= 1'b0; fence <= 1'b0; alui <= 1'b0; auipc <= 1'b0;
         store <= 1'b0; alur <= 1'b0; lui <= 1'b0; branch <= 1'b0;
-        jalr <= 1'b0; jal <= 1'b0; invalid <= 1'b0;
+        jalr <= 1'b0; jal <= 1'b0; system <= 1'b0;
+        invalid <= 1'b0; unknown <= 1'b0;
         outpc <= 32'd0;
     end else if(!hlt) begin
         immu <= immIu | immSu | immBu | immUu | immJu;
@@ -82,7 +88,8 @@ module decode (
         funct7 <= instruction[31:25];
         load <= load_w; fence <= fence_w; alui <= alui_w; auipc <= auipc_w;
         store <= store_w; alur <= alur_w; lui <= lui_w; branch <= branch_w;
-        jalr <= jalr_w; jal <= jal_w; invalid <= invalid_w; unknown <= unknown_w;
+        jalr <= jalr_w; jal <= jal_w; system <= system_w;
+        invalid <= invalid_w; unknown <= unknown_w;
         outpc <= inpc;
     end
 endmodule
@@ -95,16 +102,19 @@ module opcode_decode (
     // opcodes
     load, fence, alui, auipc,
     store, alur, lui, branch,
-    jalr, jal, invalid, unknown
+    jalr, jal, system,
+    // instruction decode fail
+    invalid, unknown
 );
     input [6:0] opcode;
     output r, i, s, b, u, j;
     output load, fence, alui, auipc;
     output store, alur, lui, branch;
-    output jalr, jal, invalid, unknown;
+    output jalr, jal, system; 
+    output invalid, unknown;
    
     assign r = alur; 
-    assign i = jalr | load | alui | fence;
+    assign i = jalr | load | alui | fence | system;
     assign s = store;
     assign b = branch;
     assign u = lui | auipc;
@@ -120,10 +130,11 @@ module opcode_decode (
     assign branch = opcode[6:2] == 5'b11000;
     assign jalr   = opcode[6:2] == 5'b11001;
     assign jal    = opcode[6:2] == 5'b11011;
+    assign system = opcode[6:2] == 5'b11100;
         
     assign unknown = !( load | fence | alui | auipc
                       | store | alur | lui | branch
-                      | jalr | jal );
+                      | jalr | jal | system );
         
     assign invalid = !(opcode[0] | opcode[1]) | unknown;
 endmodule

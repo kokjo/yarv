@@ -25,7 +25,7 @@ module rom (
 
     integer i;
     initial begin
-        for(i = 0; i < WORDS; i = i + 1) rom[i] = 32'h00000000;
+        for(i = 0; i < WORDS; i = i + 1) rom[i] <= 32'h00000000;
 ##ROM##
     end
 
@@ -43,7 +43,7 @@ data = open(sys.argv[1], "r").read()
 i = 0;
 while len(data) >= 4:
     word, data = data[:4], data[4:]
-    rom.append("        rom[%i] = 32'h%s;" % (i, word[::-1].encode("hex")));
+    rom.append("        rom[%i] <= 32'h%s;" % (i, word[::-1].encode("hex")));
     i += 1;
 
 rom = "\n".join(rom)

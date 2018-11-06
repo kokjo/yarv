@@ -2,11 +2,11 @@ CC=riscv32-unknown-elf-gcc
 LD=riscv32-unknown-elf-ld
 OBJCOPY=riscv32-unknown-elf-objcopy
 IVERILOG=iverilog
-
-SOURCES=ram.v rom.v fetch.v decode.v execute.v cache.v arb.v core.v soc.v
+HARDWARE=hardware.v soc.v
+SOURCES=ram.v rom.v fetch.v decode.v execute.v cache.v arb.v core.v spimemio.v
 TESTBENCH=testbench.v
 
-all: soc.asc testbench.vcd
+all: hardware.asc testbench.vcd hardware.time
 
 testbench.vcd: testbench
 	./testbench
@@ -26,11 +26,14 @@ firmware.elf: firmware.o
 firmware.o: firmware.s
 	$(CC) -o firmware.o -c firmware.s
 
-soc.blif: $(SOURCES)
-	yosys -p 'synth_ice40 -top soc -blif soc.blif' $(SOURCES)
+hardware.blif: $(SOURCES)
+	yosys -p 'synth_ice40 -top hardware -blif hardware.blif' $(HARDWARE) $(SOURCES) 
 
-soc.asc: soc.blif
-	arachne-pnr -d 5k -o soc.asc soc.blif
+hardware.asc: hardware.blif
+	arachne-pnr -d 8k -o hardware.asc hardware.blif
+
+hardware.time: hardware.asc
+	icetime -d hx8k -timr hardware.time hardware.asc
 
 clean:
 	rm -rf *.vcd *.bin *.elf *.o *.asc *.blif *.time testbench rom.v

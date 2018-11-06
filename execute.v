@@ -9,7 +9,9 @@ module execute (
     // individual opcodes
     load, fence, alui, auipc,
     store, alur, lui, branch,
-    jalr, jal, invalid, unknown,
+    jalr, jal, system,
+    // instruction decode fail
+    invalid, unknown,
     // pc for next stage
     inpc,
     // branch control signals
@@ -36,7 +38,8 @@ module execute (
     input [6:0] funct7;
     input load, fence, alui, auipc;
     input store, alur, lui, branch;
-    input jalr, jal, invalid, unknown;
+    input jalr, jal, system;
+    input invalid, unknown;
     input [31:0] inpc;
 
     output override;
@@ -72,10 +75,11 @@ module execute (
     );
     
     alu alu (
-        .arg0(r1),
+        .arg0((jal || branch) ? inpc : r1),
         .arg1u(alur ? r2 : immu),
         .arg1s(alur ? r2 : imms),
-        .funct3(funct3), .funct7(funct7),
+        .funct3((alui || alur) ? funct3 : 3'b000),
+        .funct7(funct7),
         .alur(alur),
         .result(alu_result)
     );
@@ -86,7 +90,7 @@ module execute (
     );
 
     mem mem (
-        .flush(flush), .load(load), .store(store),
+        .hlt(flush != 0), .load(load), .store(store),
         .r1(r1), .r2(r2), .funct3(funct3),
         .imms(imms),
         .mem_valid(mem_valid),
@@ -97,7 +101,7 @@ module execute (
         .result(mem_result)
     );
 
-    assign newpc = (jalr ? r1 : inpc) + imms;
+    assign newpc = alu_result;
     assign override = (flush == 0) & ((branch & branch_taken) | jal | jalr);
     assign fault = (flush == 0) & invalid;
 
@@ -166,17 +170,17 @@ module alu (arg0, arg1u, arg1s, funct3, funct7, alur, result);
     wire do_sra = funct7[5];
 
     assign result = (funct3 == 0) ? (do_sub ? (arg0 - arg1s) : (arg0 + arg1s))
-                  : (funct3 == 1) ? (arg0 << arg1u[4:0])
+                  : (funct3 == 1) ? (arg0 < arg1u[4:0])
                   : (funct3 == 2) ? ($signed(arg0) < $signed(arg1s))
                   : (funct3 == 3) ? (arg0 < arg1u)
                   : (funct3 == 4) ? (arg0 ^ arg1s)
-                  : (funct3 == 5) ? (do_sra ? (arg0 >> arg1u[4:0]) :  (arg0 >>> arg1u[4:0]))
+                  : (funct3 == 5) ? (do_sra ? (arg0 >>> arg1u[4:0]) :  (arg0 >> arg1u[4:0]))
                   : (funct3 == 6) ? (arg0 | arg1s)
                   : (funct3 == 7) ? (arg0 & arg1s) : 0;
 endmodule
 
 module mem (
-    flush, load, store,
+    hlt, load, store,
     r1, r2, funct3,
     imms,
     mem_valid, 
@@ -184,8 +188,7 @@ module mem (
     mem_wdata, mem_wstrb,
     result
 );
-
-    input [1:0] flush;
+    input hlt;
     input load, store;
     input [31:0] r1;
     input [31:0] r2;
@@ -200,9 +203,22 @@ module mem (
     
     output [31:0] result;
     
-    assign mem_valid = (flush == 0) & (load | store);
+    assign mem_valid = !hlt & (load | store);
     assign mem_addr = r1 + imms;
     assign mem_wdata = r2;
-    assign mem_wstrb = ((flush == 0) & store) ? 4'b1111 : 4'b0000;
+    assign mem_wstrb = (!hlt & store) ? 4'b1111 : 4'b0000;
     assign result = mem_rdata;
 endmodule
+
+module system (
+    clk, rst, hlt,
+    system, 
+    rs1, r1, uimm,
+);
+    input clk, rst, hlt;
+    input system;
+    input [4:0] rs1;
+    input [31:0] r1;
+    input [31:0] uimm;
+    
+endmodule 
