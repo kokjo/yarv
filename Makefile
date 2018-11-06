@@ -6,7 +6,7 @@ HARDWARE=hardware.v soc.v
 SOURCES=ram.v rom.v fetch.v decode.v execute.v cache.v arb.v core.v spimemio.v
 TESTBENCH=testbench.v
 
-all: hardware.asc testbench.vcd hardware.time
+all: hardware.asc testbench.vcd hardware.bin
 
 testbench.vcd: testbench
 	./testbench
@@ -30,10 +30,11 @@ hardware.blif: $(SOURCES)
 	yosys -p 'synth_ice40 -top hardware -blif hardware.blif' $(HARDWARE) $(SOURCES) 
 
 hardware.asc: hardware.blif
-	arachne-pnr -d 8k -o hardware.asc hardware.blif
+	arachne-pnr -d 8k -P cm81 -o hardware.asc -p hardware.pcf hardware.blif
 
-hardware.time: hardware.asc
-	icetime -d hx8k -timr hardware.time hardware.asc
+hardware.bin: hardware.asc
+	icetime -d hx8k -c 16 -mtr hardware.rpt hardware.asc
+	icepack hardware.asc hardware.bin
 
 clean:
-	rm -rf *.vcd *.bin *.elf *.o *.asc *.blif *.time testbench rom.v
+	rm -rf *.vcd *.bin *.elf *.o *.asc *.blif *.rpt testbench rom.v

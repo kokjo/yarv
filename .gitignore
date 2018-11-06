@@ -7,4 +7,4 @@ rom.v
 *.bin
 *.asc
 *.blif
-*.time
+*.rpt

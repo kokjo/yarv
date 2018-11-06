@@ -73,13 +73,17 @@ module soc (
     wire spimemio_cfgreg_sel = mem_valid && mem_addr == 32'h02000000;
     wire [31:0] spimemio_cfgreg_do;
 
+    assign iomem_valid = mem_valid && mem_addr >= 32'h03000000;
+
     wire [31:0] mem_rdata = spimem_valid ? spimem_rdata
                           : ram_valid ? ram_rdata
+                          : iomem_valid ? iomem_rdata
                           : spimemio_cfgreg_sel ? spimemio_cfgreg_do
                           : 32'h00000000;
 
     wire mem_ready = (spimem_valid & spimem_ready)
                    | (ram_valid & ram_ready)
+                   | (iomem_valid & iomem_ready)
                    | spimemio_cfgreg_sel;
 
     core #(
