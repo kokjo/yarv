@@ -57,6 +57,7 @@ module execute (
     wire [31:0] alu_result;
     wire [31:0] mem_result;
     wire branch_taken;
+
     wire [31:0] result = auipc ? inpc + imms
                        : lui ? imms 
                        : (alui || alur) ? alu_result
@@ -79,10 +80,10 @@ module execute (
     );
     
     alu alu (
-        .arg0((jal || branch) ? inpc : r1),
+        .arg0(r1),
         .arg1u(alur ? r2 : immu),
         .arg1s(alur ? r2 : imms),
-        .funct3((alui || alur) ? funct3 : 3'b000),
+        .funct3(funct3),
         .funct7(funct7),
         .alur(alur),
         .result(alu_result)
@@ -123,7 +124,9 @@ module execute (
         .newpc(sys_newpc)
     );
 
-    assign newpc = sys_override ? sys_newpc : alu_result;
+    wire [31:0] branch_newpc = (jalr ? r1 : inpc) + imms;
+
+    assign newpc = sys_override ? sys_newpc : branch_newpc;
     assign override = (flush == 0) & ((branch & branch_taken) | jal | jalr | sys_override);
     assign fault = (flush == 0) & invalid;
 
@@ -192,13 +195,14 @@ module alu (arg0, arg1u, arg1s, funct3, funct7, alur, result);
     wire do_sra = funct7[5];
 
     assign result = (funct3 == 0) ? (do_sub ? (arg0 - arg1s) : (arg0 + arg1s))
-                  : (funct3 == 1) ? (arg0 < arg1u[4:0])
+                  : (funct3 == 1) ? (arg0 << arg1u[4:0])
                   : (funct3 == 2) ? ($signed(arg0) < $signed(arg1s))
                   : (funct3 == 3) ? (arg0 < arg1u)
                   : (funct3 == 4) ? (arg0 ^ arg1s)
-                  : (funct3 == 5) ? (do_sra ? (arg0 >>> arg1u[4:0]) :  (arg0 >> arg1u[4:0]))
+                  : (funct3 == 5) ? (do_sra ? (arg0 >>> arg1u[4:0]) : (arg0 >> arg1u[4:0]))
                   : (funct3 == 6) ? (arg0 | arg1s)
-                  : (funct3 == 7) ? (arg0 & arg1s) : 0;
+                  : (funct3 == 7) ? (arg0 & arg1s)
+                  : 32'h00000000;
 endmodule
 
 module mem (

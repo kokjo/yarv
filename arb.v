@@ -29,26 +29,38 @@ module arb (
     localparam IDLE = 0;
     localparam SLAVE0 = 1;
     localparam SLAVE1 = 2;
+
     reg [1:0] state = IDLE;
 
-    assign mem_valid = state == SLAVE0 || state == SLAVE1; 
+    assign mem_valid = state == SLAVE0 || state == SLAVE1;
     assign mem_addr  = state == SLAVE0 ? mem0_addr : mem1_addr;
     assign mem_wdata = state == SLAVE0 ? mem0_wdata : mem1_wdata;
     assign mem_wstrb = state == SLAVE0 ? mem0_wstrb : mem1_wstrb;
 
     assign mem0_ready = state == SLAVE0 && mem_ready;
-    assign mem0_rdata = mem0_ready ? mem_rdata : 32'h00000000;
+    assign mem0_rdata = mem_rdata;
 
     assign mem1_ready = state == SLAVE1 && mem_ready;
-    assign mem1_rdata = mem1_ready ? mem_rdata : 32'h00000000;
+    assign mem1_rdata = mem_rdata;
+
+/*
+    wire next_state = rst ? IDLE
+                    : (state == IDLE && mem0_valid) ? SLAVE0
+                    : (state == IDLE && mem1_valid) ? SLAVE1
+                    : (state == SLAVE0 && mem_ready) ? (mem1_valid ? SLAVE1 : IDLE)
+                    : (state == SLAVE1 && mem_ready) ? (mem0_valid ? SLAVE0 : IDLE)
+                    : state;
+
+    always @ (posedge clk) state <= next_state;
+*/
 
     always @ (posedge clk) if(rst) begin
         state <= IDLE;
     end else begin
         case(state)
             IDLE: begin
-                if(mem1_valid) state <= SLAVE1;
                 if(mem0_valid) state <= SLAVE0;
+                if(mem1_valid) state <= SLAVE1;
             end
             SLAVE0:
                 if(mem_ready) state <= mem1_valid ? SLAVE1 : IDLE;

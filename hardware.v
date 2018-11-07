@@ -33,7 +33,8 @@ module hardware (
     wire [31:0] iomem_rdata = gpio_valid ? gpio_rdata : 32'h00000000;
 
     soc #(
-        .ICACHE_DEPTH(4)
+        .ICACHE_DEPTH(4),
+        .RAM_DEPTH(11),
     )soc (
         .clk(clk), .rst(rst),
         .iomem_valid(iomem_valid), .iomem_ready(iomem_ready),

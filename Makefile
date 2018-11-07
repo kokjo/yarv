@@ -23,11 +23,11 @@ firmware.bin: firmware.elf
 firmware.elf: sections.lds firmware.c start.S
 	$(CC) -march=rv32i -nostartfiles -Wl,-Bstatic,-T,sections.lds,--strip-debug,-Map=firmware.map,--cref -ffreestanding -nostdlib -o firmware.elf start.S firmware.c
 
-hardware.blif: $(SOURCES)
-	yosys -p 'synth_ice40 -top hardware -blif hardware.blif' $(HARDWARE) $(SOURCES) 
+hardware.blif: $(HARDWARE) $(SOURCES)
+	yosys -p 'synth_ice40 -top hardware -blif hardware.blif -json hardware.json' $(HARDWARE) $(SOURCES) 
 
 hardware.asc: hardware.blif
-	arachne-pnr -d 8k -P cm81 -o hardware.asc -p hardware.pcf hardware.blif
+	arachne-pnr -r -d 8k -P cm81 -o hardware.asc -p hardware.pcf hardware.blif
 
 hardware.bin: hardware.asc
 	icetime -d hx8k -c 16 -mtr hardware.rpt hardware.asc

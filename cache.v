@@ -15,7 +15,7 @@ module icache (
     input [31:0] cache_addr;
     output [31:0] cache_rdata;
 
-    output reg mem_valid;
+    output mem_valid;
     input mem_ready;
     output [31:0] mem_addr;
     input [31:0] mem_rdata;
@@ -26,41 +26,22 @@ module icache (
     reg [31:0] match [WORDS-1:0];
     reg [31:0] cache [WORDS-1:0];
 
-    assign cache_ready = valid[tag] && match[tag] == cache_addr;
-    assign cache_rdata = cache[tag];
+    wire cache_hit = cache_valid && (valid[tag] && match[tag] == cache_addr);
+
+    assign cache_ready = cache_hit || mem_ready;
+    assign cache_rdata = mem_valid ? mem_rdata : cache[tag];
 
     assign mem_addr = cache_addr;
-
-    wire do_fetch = cache_valid && !cache_ready;
+    assign mem_valid = cache_valid && !cache_hit;
 
     always @ (posedge clk) if(rst) begin
         valid <= 0;
     end else begin
         if(cache_flush) valid <= 0;
-        if(do_fetch) begin
-            mem_valid <= 1;
-            if(mem_ready) begin
-                valid[tag] <= 1;
-                match[tag] <= cache_addr;
-                cache[tag] <= mem_rdata;
-                mem_valid <= 0;
-            end
+        if(mem_valid && mem_ready) begin
+            valid[tag] <= 1;
+            match[tag] <= cache_addr;
+            cache[tag] <= mem_rdata;
         end
     end
 endmodule
-
-/*
-module dcache (
-    clk, rst,
-    cache_flush,
-    cache_valid, cache_ready,
-    cache_addr, cache_rdata,
-    cache_wdata, cache_wstrb,
-    
-    mem_valid, mem_ready,
-    mem_addr, mem_rdata,
-    mem_wdata, mem_wstrb
-);
-
-endmodule
-*/

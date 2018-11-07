@@ -80,7 +80,7 @@ module testbench();
     initial begin
         $dumpfile("testbench.vcd");
         $dumpvars;
-        #4
+        #2
         rst = 0;
         #10000
         $finish;
