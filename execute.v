@@ -240,7 +240,9 @@ module mem (
     assign mem_wstrb = ((flush == 0) & store & !mem_done) ? 4'b1111 : 4'b0000;
     assign result = mem_rdata;
 
-    always @ (posedge clk) begin
+    always @ (posedge clk) if(rst) begin
+        mem_done <= 0;
+    end else begin
         if(hlt && (load || store) && !mem_done)begin
             mem_done <= 0; 
         end
