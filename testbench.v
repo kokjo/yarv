@@ -59,7 +59,7 @@ module testbench();
 
     wire [31:0] gpio_oe;
     wire [31:0] gpio_do;
-    wire [31:0] gpio_di;
+    wire [31:0] gpio_di = 32'h5a5a5a5a;
 
     mem_gpio gpio (
         .clk(clk), .rst(rst),

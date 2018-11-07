@@ -27,6 +27,7 @@ module soc (
     flash_io3_di
 );
     parameter RAM_DEPTH = 8;
+    parameter ICACHE_DEPTH = 8;
     parameter RESET_PC = 32'h00050000;
     localparam RAM_WORDS = 1 << RAM_DEPTH;
 
@@ -87,7 +88,8 @@ module soc (
                    | spimemio_cfgreg_sel;
 
     core #(
-        .RESET_PC(RESET_PC)
+        .RESET_PC(RESET_PC),
+        .ICACHE_DEPTH(ICACHE_DEPTH)
     ) core (
         .clk(clk), .rst(rst),
         .mem_valid(mem_valid),

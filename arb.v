@@ -37,10 +37,10 @@ module arb (
     assign mem_wstrb = state == SLAVE0 ? mem0_wstrb : mem1_wstrb;
 
     assign mem0_ready = state == SLAVE0 && mem_ready;
-    assign mem0_rdata = mem_rdata;
+    assign mem0_rdata = mem0_ready ? mem_rdata : 32'h00000000;
 
     assign mem1_ready = state == SLAVE1 && mem_ready;
-    assign mem1_rdata = mem_rdata;
+    assign mem1_rdata = mem1_ready ? mem_rdata : 32'h00000000;
 
     always @ (posedge clk) if(rst) begin
         state <= IDLE;
@@ -51,7 +51,7 @@ module arb (
                 if(mem0_valid) state <= SLAVE0;
             end
             SLAVE0:
-                if(mem_ready) state <= IDLE;
+                if(mem_ready) state <= mem1_valid ? SLAVE1 : IDLE;
             SLAVE1:
                 if(mem_ready) state <= mem0_valid ? SLAVE0 : IDLE;
         endcase

@@ -6,17 +6,16 @@
 // means.
 
 .section .text
-_reset:
-	// no more than 8 bytes here !
-	j start
+_vectors:
+	j reset
+    j exception
 
-.global debug
-
-start:
+reset:
 	/* zero-initialize all registers */
 
-	addi x1, zero, 0
+	li ra, 0
 	li sp, 1024
+/*
 	addi x3, zero, 0
 	addi x4, zero, 0
 	addi x5, zero, 0
@@ -46,12 +45,19 @@ start:
 	addi x29, zero, 0
 	addi x30, zero, 0
 	addi x31, zero, 0
+*/
+    
+    csrrw x1, mscratch, sp
+    ecall
 
-
-        call main
+    call main
 loop:
-        j loop
+    j loop
 
-
-
-
+exception:
+    csrrw x1, mscratch, x1
+    csrrw x1, mepc, x1
+    addi x1, x1, 4
+    csrrw x1, mepc, x1
+    csrrw x1, mscratch, x1
+    mret

@@ -5,6 +5,7 @@ module core (
     mem_wdata, mem_wstrb,
 );
     parameter RESET_PC = 32'h00000000;
+    parameter ICACHE_DEPTH = 8;
 
     input clk, rst;
     output reg fault;
@@ -58,7 +59,9 @@ module core (
     wire [31:0] icache_addr;
     wire [31:0] icache_rdata;
 
-    icache icache(
+    icache #(
+        .DEPTH(ICACHE_DEPTH)
+    ) icache(
         .clk(clk), .rst(rst),
         .cache_flush(icache_flush),
         .cache_valid(icache_valid),
@@ -135,6 +138,7 @@ module core (
         .fault(execute_fault),
 
         .mem_valid(mem1_valid),
+        .mem_ready(mem1_ready),
         .mem_addr(mem1_addr),
         .mem_rdata(mem1_rdata),
         .mem_wdata(mem1_wdata),

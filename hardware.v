@@ -32,7 +32,9 @@ module hardware (
     wire iomem_ready = (gpio_valid && gpio_ready);
     wire [31:0] iomem_rdata = gpio_valid ? gpio_rdata : 32'h00000000;
 
-    soc soc (
+    soc #(
+        .ICACHE_DEPTH(4)
+    )soc (
         .clk(clk), .rst(rst),
         .iomem_valid(iomem_valid), .iomem_ready(iomem_ready),
         .iomem_addr(iomem_addr), .iomem_rdata(iomem_rdata),

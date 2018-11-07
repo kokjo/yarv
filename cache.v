@@ -4,7 +4,7 @@ module icache (
     cache_valid, cache_ready, cache_addr, cache_rdata,
     mem_valid, mem_ready, mem_addr, mem_rdata
 );
-    parameter DEPTH = 8;
+    parameter DEPTH = 4;
     localparam WORDS = 1 << DEPTH;
 
     input clk, rst;
