@@ -7,6 +7,8 @@ module mem_gpio (
     gpio_oe, gpio_do, gpio_di,
     alt_oe, alt_do, alt_di
 );
+    parameter ALT = 0;
+
     input clk, rst;
 
     input mem_valid;
@@ -32,9 +34,14 @@ module mem_gpio (
     genvar i;
     generate
         for(i = 0; i < 32; i = i + 1) begin
-            assign gpio_oe[i] = alt_en[i] ? alt_oe[i]  : gpio_oe_r[i];
-            assign gpio_do[i] = alt_en[i] ? alt_do[i]  : gpio_do_r[i];
-            assign alt_di[i]  = alt_en[i] ? gpio_di[i] : 1'b0;
+            if(ALT) begin
+                assign gpio_oe[i] = alt_en[i] ? alt_oe[i]  : gpio_oe_r[i];
+                assign gpio_do[i] = alt_en[i] ? alt_do[i]  : gpio_do_r[i];
+                assign alt_di[i]  = alt_en[i] ? gpio_di[i] : 1'b0;
+            end else begin
+                assign gpio_oe[i] = gpio_oe_r[i];
+                assign gpio_do[i] = gpio_do_r[i];
+            end
         end
     endgenerate
 
@@ -51,16 +58,16 @@ module mem_gpio (
         if(mem_valid && !mem_ready) begin
             mem_ready <= 1;
             if(mem_addr[3:0] == 4'h0) begin
-                mem_rdata <= alt_en;
-                if(mem_write) alt_en <= mem_wdata;
+                mem_rdata <= gpio_di;
+                if(mem_write) gpio_do_r <= mem_wdata;
             end
             if(mem_addr[3:0] == 4'h4) begin
                 mem_rdata <= gpio_oe_r;
                 if(mem_write) gpio_oe_r <= mem_wdata;
             end
-            if(mem_addr[3:0] == 4'h8) begin
-                mem_rdata <= gpio_di;
-                if(mem_write) gpio_do_r <= mem_wdata;
+            if(ALT && mem_addr[3:0] == 4'h8) begin
+                mem_rdata <= alt_en;
+                if(mem_write) alt_en <= mem_wdata;
             end
         end
     end
