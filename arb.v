@@ -59,8 +59,8 @@ module arb (
     end else begin
         case(state)
             IDLE: begin
-                if(mem0_valid) state <= SLAVE0;
                 if(mem1_valid) state <= SLAVE1;
+                if(mem0_valid) state <= SLAVE0;
             end
             SLAVE0:
                 if(mem_ready) state <= mem1_valid ? SLAVE1 : IDLE;
