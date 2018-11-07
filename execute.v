@@ -233,12 +233,35 @@ module mem (
     output [31:0] result;
 
     reg mem_done;
+    reg [31:0] rdata_latch;
+    wire [31:0] rdata = mem_done ? rdata_latch : mem_rdata;
     
+    wire byte_access = funct3[1:0] == 2'b00;
+    wire word_access = funct3[1:0] == 2'b01;
+    wire dword_access = funct3[1:0] == 2'b10;
+
+    wire signextend = !funct3[2];
+
+    wire [3:0] wstrb = byte_access ? (4'b0001 << mem_addr[1:0])
+               : word_access ? (4'b0011 << 2*mem_addr[1])
+               : 4'b1111;
+
+    wire [31:0] wdata = byte_access ? (r2 << 8*mem_addr[1:0])
+                      : word_access ? (r2 << 16*mem_addr[2])
+                      : r2;
+
+    wire [7:0] byte = rdata >> 8*mem_addr[1:0];
+    wire [15:0] word = rdata >> 16*mem_addr[1];
+    wire [31:0] byte_result = {{24{byte[7] && signextend}}, byte};
+    wire [31:0] word_result = {{16{word[15] && signextend}}, word};
+
     assign mem_valid = (flush == 0) & (load | store) & !mem_done;
-    assign mem_addr = r1 + imms;
-    assign mem_wdata = r2;
-    assign mem_wstrb = ((flush == 0) & store & !mem_done) ? 4'b1111 : 4'b0000;
-    assign result = mem_rdata;
+    assign mem_addr = (r1 + imms) & ~3;
+    assign mem_wdata = wdata;
+    assign mem_wstrb = ((flush == 0) & store & !mem_done) ? wstrb : 4'b0000;
+    assign result = byte_access ? byte_result
+                  : word_access ? word_result
+                  : rdata;
 
     always @ (posedge clk) if(rst) begin
         mem_done <= 0;
@@ -246,7 +269,10 @@ module mem (
         if(hlt && (load || store) && !mem_done)begin
             mem_done <= 0; 
         end
-        if(mem_ready) mem_done <= 1;
+        if(mem_ready) begin
+            mem_done <= 1;
+            rdata_latch <= mem_rdata;
+        end
         if(!hlt) mem_done <= 0;
     end
 endmodule
