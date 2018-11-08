@@ -24,7 +24,7 @@ void main() {
     reg_gpio_oe = 0x00000001;
 
     while (1) {
-        reg_gpio_do = (led_timer >> 12) & 1;
+        reg_gpio_do = (led_timer >> 16) & 1;
         led_timer = led_timer + 1;
     } 
 }

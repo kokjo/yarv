@@ -3,8 +3,8 @@ LD=riscv32-unknown-elf-ld
 OBJCOPY=riscv32-unknown-elf-objcopy
 IVERILOG=iverilog
 HARDWARE=hardware.v soc.v spimemio.v
-SOURCES=ram.v rom.v fetch.v decode.v execute.v cache.v arb.v core.v mem_gpio.v
-TESTBENCH=testbench.v
+SOURCES=ram.v fetch.v decode.v execute.v cache.v arb.v core.v mem_gpio.v
+TESTBENCH=testbench.v rom.v
 
 all: hardware.asc testbench.vcd hardware.bin
 
@@ -39,5 +39,10 @@ hardware.bin: hardware.asc
 hardware_tb: $(SOURCES) $(HARDWARE) hardware_tb.v spiflash.v #firmware.hex
 	iverilog -s hardware_tb -o $@ $^ `yosys-config --datdir/ice40/cells_sim.v`
 
+program: hardware.bin firmware.bin
+	tinyprog -p hardware.bin -u firmware.bin
+
 clean:
 	rm -rf *.vcd *.bin *.elf *.o *.asc *.blif *.rpt *.hex hardware_tb testbench rom.v
+
+.PHONY: program clean
