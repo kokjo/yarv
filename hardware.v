@@ -23,7 +23,7 @@ module hardware (
     wire iomem_valid;
     wire [31:0] iomem_addr;
     wire [31:0] iomem_wdata;
-    wire [31:0] iomem_wstrb;
+    wire [3:0] iomem_wstrb;
 
     wire gpio_valid = iomem_valid && iomem_addr[31:16] == 28'h0300;
     wire gpio_ready;
@@ -34,8 +34,8 @@ module hardware (
 
     soc #(
         .ICACHE_DEPTH(4),
-        .RAM_DEPTH(11),
-    )soc (
+        .RAM_DEPTH(11)
+    ) soc (
         .clk(clk), .rst(rst),
         .iomem_valid(iomem_valid), .iomem_ready(iomem_ready),
         .iomem_addr(iomem_addr), .iomem_rdata(iomem_rdata),
@@ -71,15 +71,16 @@ module hardware (
 
     wire [31:0] gpio_oe;
     wire [31:0] gpio_do;
-    wire [31:0] gpio_di;
+    wire [31:0] gpio_di = 32'h00000000;
 
     mem_gpio gpio (
         .clk(clk), .rst(rst),
         .mem_valid(gpio_valid),
         .mem_ready(gpio_ready),
+        .mem_addr(iomem_addr),
         .mem_rdata(gpio_rdata),
-        .mem_wdata(mem_wdata),
-        .mem_wstrb(mem_wstrb),
+        .mem_wdata(iomem_wdata),
+        .mem_wstrb(iomem_wstrb),
 
         .gpio_oe(gpio_oe),
         .gpio_do(gpio_do),
@@ -92,8 +93,8 @@ module hardware (
     ) gpio_led_buf (
         .PACKAGE_PIN(user_led),
         .OUTPUT_ENABLE(gpio_oe[0]),
-        .D_OUT_0(gpio_do[0]),
-        .D_IN_0(gpio_di[0])
+        .D_OUT_0(gpio_do[0])
+//        .D_IN_0(gpio_di[0])
     );
 
 endmodule

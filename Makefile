@@ -23,6 +23,9 @@ firmware.bin: firmware.elf
 firmware.elf: sections.lds firmware.c start.S
 	$(CC) -march=rv32i -nostartfiles -Wl,-Bstatic,-T,sections.lds,--strip-debug,-Map=firmware.map,--cref -ffreestanding -nostdlib -o firmware.elf start.S firmware.c
 
+firmware.hex: firmware.elf
+	riscv32-unknown-elf-objcopy -O verilog firmware.elf firmware.hex
+
 hardware.blif: $(HARDWARE) $(SOURCES)
 	yosys -p 'synth_ice40 -top hardware -blif hardware.blif -json hardware.json' $(HARDWARE) $(SOURCES) 
 
@@ -33,5 +36,8 @@ hardware.bin: hardware.asc
 	icetime -d hx8k -c 16 -mtr hardware.rpt hardware.asc
 	icepack hardware.asc hardware.bin
 
+hardware_tb: $(SOURCES) $(HARDWARE) hardware_tb.v spiflash.v #firmware.hex
+	iverilog -s hardware_tb -o $@ $^ `yosys-config --datdir/ice40/cells_sim.v`
+
 clean:
-	rm -rf *.vcd *.bin *.elf *.o *.asc *.blif *.rpt testbench rom.v
+	rm -rf *.vcd *.bin *.elf *.o *.asc *.blif *.rpt *.hex hardware_tb testbench rom.v
