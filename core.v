@@ -117,7 +117,7 @@ module core (
         .rd(rd), .funct3(funct3), .rs1(rs1), .rs2(rs2), .funct7(funct7),
         .load(load), .fence(fence), .alui(alui), .auipc(auipc),
         .store(store), .alur(alur), .lui(lui), .branch(branch),
-        .jalr(jalr), .jal(val), .system(system),
+        .jalr(jalr), .jal(jal), .system(system),
         .invalid(invalid), .unknown(unknown),
         .outpc(execute_pc)
     );
@@ -129,7 +129,7 @@ module core (
         .rd(rd), .funct3(funct3), .rs1(rs1), .rs2(rs2), .funct7(funct7),
         .load(load), .fence(fence), .alui(alui), .auipc(auipc),
         .store(store), .alur(alur), .lui(lui), .branch(branch),
-        .jalr(jalr), .jal(val), .system(system),
+        .jalr(jalr), .jal(jal), .system(system),
         .invalid(invalid), .unknown(unknown),
         .inpc(execute_pc),
         
