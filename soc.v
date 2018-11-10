@@ -74,6 +74,14 @@ module soc (
     wire spimemio_cfgreg_sel = mem_valid && mem_addr == 32'h02000000;
     wire [31:0] spimemio_cfgreg_do;
 
+    wire simpleuart_reg_div_sel = mem_valid && (mem_addr == 32'h 0200_0004);
+    wire [31:0] simpleuart_reg_div_do;
+
+    wire simpleuart_reg_dat_sel = mem_valid && (mem_addr == 32'h 0200_0008);
+    wire [31:0] simpleuart_reg_dat_do;
+    wire simpleuart_reg_dat_wait;
+
+
     assign iomem_valid = mem_valid && mem_addr >= 32'h03000000;
     assign iomem_addr = mem_addr;
     assign iomem_wdata = mem_wdata;
@@ -83,12 +91,16 @@ module soc (
                           : ram_valid ? ram_rdata
                           : iomem_valid ? iomem_rdata
                           : spimemio_cfgreg_sel ? spimemio_cfgreg_do
+                          : simpleuart_reg_div_sel ? simpleuart_reg_div_do
+                          : simpleuart_reg_dat_sel ? simpleuart_reg_dat_do
                           : 32'h00000000;
 
     wire mem_ready = (spimem_valid & spimem_ready)
                    | (ram_valid & ram_ready)
                    | (iomem_valid & iomem_ready)
-                   | spimemio_cfgreg_sel;
+                   | spimemio_cfgreg_sel
+                   | simpleuart_reg_div_sel
+                   | (simpleuart_reg_dat_sel && !simpleuart_reg_dat_wait);
 
     core #(
         .RESET_PC(RESET_PC),
@@ -144,5 +156,23 @@ module soc (
         .cfgreg_we(spimemio_cfgreg_sel ? mem_wstrb : 4'b 0000),
         .cfgreg_di(mem_wdata),
         .cfgreg_do(spimemio_cfgreg_do)
+    );
+
+    simpleuart simpleuart (
+        .clk(clk),
+        .resetn(!rst),
+
+        .ser_tx(ser_tx      ),
+        .ser_rx(ser_rx      ),
+
+        .reg_div_we(simpleuart_reg_div_sel ? mem_wstrb : 4'b 0000),
+        .reg_div_di(mem_wdata),
+        .reg_div_do(simpleuart_reg_div_do),
+
+        .reg_dat_we(simpleuart_reg_dat_sel ? mem_wstrb[0] : 1'b 0),
+        .reg_dat_re(simpleuart_reg_dat_sel && !mem_wstrb),
+        .reg_dat_di(mem_wdata),
+        .reg_dat_do(simpleuart_reg_dat_do),
+        .reg_dat_wait(simpleuart_reg_dat_wait)
     );
 endmodule

@@ -246,21 +246,24 @@ module mem (
 
     wire signextend = !funct3[2];
 
-    wire [3:0] wstrb = byte_access ? (4'b0001 << mem_addr[1:0])
-               : word_access ? (4'b0011 << 2*mem_addr[1])
+    wire [31:0] mem_addr_unaligned = r1 + imms;
+    wire [1:0] byte_off = mem_addr_unaligned[1:0];
+
+    wire [3:0] wstrb = byte_access ? (4'b0001 << byte_off)
+               : word_access ? (4'b0011 << 2*byte_off[1])
                : 4'b1111;
 
-    wire [31:0] wdata = byte_access ? (r2 << 8*mem_addr[1:0])
-                      : word_access ? (r2 << 16*mem_addr[2])
+    wire [31:0] wdata = byte_access ? (r2 << 8*byte_off)
+                      : word_access ? (r2 << 16*byte_off[1])
                       : r2;
 
-    wire [7:0] byte = rdata >> 8*mem_addr[1:0];
-    wire [15:0] word = rdata >> 16*mem_addr[1];
+    wire [7:0] byte = rdata >> 8*byte_off;
+    wire [15:0] word = rdata >> 16*byte_off[1];
     wire [31:0] byte_result = {{24{byte[7] && signextend}}, byte};
     wire [31:0] word_result = {{16{word[15] && signextend}}, word};
 
     assign mem_valid = (flush == 0) & (load | store) & !mem_done;
-    assign mem_addr = (r1 + imms) & ~3;
+    assign mem_addr = mem_addr_unaligned & ~3;
     assign mem_wdata = wdata;
     assign mem_wstrb = ((flush == 0) & store & !mem_done) ? wstrb : 4'b0000;
     assign result = byte_access ? byte_result
@@ -269,6 +272,7 @@ module mem (
 
     always @ (posedge clk) if(rst) begin
         mem_done <= 0;
+        rdata_latch <= 0;
     end else begin
         if(hlt && (load || store) && !mem_done)begin
             mem_done <= 0; 
