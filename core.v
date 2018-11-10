@@ -1,5 +1,5 @@
 module core (
-    clk, rst, fault,
+    clk, rstn, fault,
     mem_valid, mem_ready,
     mem_addr, mem_rdata,
     mem_wdata, mem_wstrb,
@@ -7,7 +7,7 @@ module core (
     parameter RESET_PC = 32'h00000000;
     parameter ICACHE_DEPTH = 8;
 
-    input clk, rst;
+    input clk, rstn;
     output reg fault;
 
     output mem_valid;
@@ -30,7 +30,7 @@ module core (
     wire [3:0] mem1_wstrb;
 
     arb arb0 (
-        .clk(clk), .rst(rst),
+        .clk(clk), .rstn(rstn),
         .mem0_valid(mem0_valid),
         .mem0_ready(mem0_ready),
         .mem0_addr(mem0_addr),
@@ -62,7 +62,7 @@ module core (
     icache #(
         .DEPTH(ICACHE_DEPTH)
     ) icache(
-        .clk(clk), .rst(rst),
+        .clk(clk), .rstn(rstn),
         .cache_flush(icache_flush),
         .cache_valid(icache_valid),
         .cache_ready(icache_ready),
@@ -86,7 +86,7 @@ module core (
     fetch #(
         .RESET_PC(RESET_PC)
     ) fetcher (
-        .clk(clk), .rst(rst), .hlt(hlt),
+        .clk(clk), .rstn(rstn), .hlt(hlt),
         .override(override), .newpc(newpc),
         .mem_valid(icache_valid),
         .mem_addr(icache_addr),
@@ -110,7 +110,7 @@ module core (
     wire [31:0] execute_pc;
 
     decode decoder (
-        .clk(clk), .rst(rst), .hlt(hlt),
+        .clk(clk), .rstn(rstn), .hlt(hlt),
         .instruction(instruction), .inpc(fetch_pc),
         .imms(imms), .immu(immu),
         .opcode(opcode),
@@ -123,7 +123,7 @@ module core (
     );
 
     execute executer (
-        .clk(clk), .rst(rst), .hlt(hlt),
+        .clk(clk), .rstn(rstn), .hlt(hlt),
         .imms(imms), .immu(immu),
         .opcode(opcode),
         .rd(rd), .funct3(funct3), .rs1(rs1), .rs2(rs2), .funct7(funct7),
@@ -147,7 +147,7 @@ module core (
 
     assign icache_flush = fence;
 
-    always @ (posedge clk) if(rst) begin
+    always @ (posedge clk) if(!rstn) begin
         fault <= 0;
     end else if(execute_fault) begin
         fault <= 1;

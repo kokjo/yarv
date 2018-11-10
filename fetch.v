@@ -1,11 +1,11 @@
 module fetch(
-    clk, rst, hlt,
+    clk, rstn, hlt,
     override, newpc,
     mem_valid, mem_addr, mem_rdata,
     instruction, outpc
 );
     // control signals
-    input clk, rst, hlt;
+    input clk, rstn, hlt;
 
     // branch control
     input override;
@@ -29,7 +29,7 @@ module fetch(
     programcounter #(
         .RESET_PC(RESET_PC)
     ) pc0 (
-        .clk(clk), .rst(rst), .hlt(hlt),
+        .clk(clk), .rstn(rstn), .hlt(hlt),
         .override(override), .newpc(newpc),
         .pc(pc)
     );
@@ -37,7 +37,7 @@ module fetch(
     assign mem_addr = pc;
     assign mem_valid = 1;
 
-    always @ (posedge clk) if(rst) begin
+    always @ (posedge clk) if(!rstn) begin
         instruction <= RESET_INSTRUCTION;
         outpc <= RESET_PC;
     end else if(!hlt) begin
@@ -47,16 +47,16 @@ module fetch(
 endmodule
 
 module programcounter (
-    clk, rst, hlt, override, newpc, pc
+    clk, rstn, hlt, override, newpc, pc
 );
-    input clk, rst, hlt;
+    input clk, rstn, hlt;
     input override;
     input [31:0] newpc;
     output reg [31:0] pc;
 
     parameter RESET_PC = 32'h00000000;
 
-    always @ (posedge clk) if(rst) begin
+    always @ (posedge clk) if(!rstn) begin
         pc <= RESET_PC;
     end else if (!hlt) begin
         pc <= override ? newpc : pc + 4;

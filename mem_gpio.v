@@ -1,5 +1,5 @@
 module mem_gpio (
-    clk, rst,
+    clk, rstn,
     mem_valid, mem_ready,
     mem_addr, mem_rdata,
     mem_wdata, mem_wstrb,
@@ -9,7 +9,7 @@ module mem_gpio (
 );
     parameter ALT = 0;
 
-    input clk, rst;
+    input clk, rstn;
 
     input mem_valid;
     output reg mem_ready;
@@ -47,7 +47,7 @@ module mem_gpio (
 
     wire mem_write = &mem_wstrb;
     
-    always @ (posedge clk) if(rst) begin
+    always @ (posedge clk) if(!rstn) begin
         gpio_oe_r <= 32'h00000000;
         gpio_do_r <= 32'h00000000;
         alt_en <= 32'h00000000;

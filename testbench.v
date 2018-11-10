@@ -1,6 +1,6 @@
 module testbench();
     reg clk = 1;
-    reg rst = 1;
+    reg rstn = 0;
 
     wire [31:0] mem_addr;
     wire [31:0] mem_wdata;
@@ -48,7 +48,7 @@ module testbench();
     core #(
         .RESET_PC(32'h00050000)
     ) core (
-        .clk(clk), .rst(rst),
+        .clk(clk), .rstn(rstn),
         .mem_valid(mem_valid),
         .mem_ready(mem_ready),
         .mem_addr(mem_addr),
@@ -62,7 +62,7 @@ module testbench();
     wire [31:0] gpio_di = 32'h5a5a5a5a;
 
     mem_gpio gpio (
-        .clk(clk), .rst(rst),
+        .clk(clk), .rstn(rstn),
         .mem_valid(gpio_valid),
         .mem_ready(gpio_ready),
         .mem_addr(mem_addr),
@@ -81,7 +81,7 @@ module testbench();
         $dumpfile("testbench.vcd");
         $dumpvars;
         #2
-        rst = 0;
+        rstn = 1;
         #10000
         $finish;
     end

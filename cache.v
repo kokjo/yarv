@@ -1,5 +1,5 @@
 module icache (
-    clk, rst,
+    clk, rstn,
     cache_flush,
     cache_valid, cache_ready, cache_addr, cache_rdata,
     mem_valid, mem_ready, mem_addr, mem_rdata
@@ -7,7 +7,7 @@ module icache (
     parameter DEPTH = 4;
     localparam WORDS = 1 << DEPTH;
 
-    input clk, rst;
+    input clk, rstn;
     input cache_flush;
 
     input cache_valid;
@@ -34,7 +34,7 @@ module icache (
     assign mem_addr = cache_addr;
     assign mem_valid = cache_valid && !cache_hit;
 
-    always @ (posedge clk) if(rst) begin
+    always @ (posedge clk) if(!rstn) begin
         valid <= 0;
     end else begin
         if(cache_flush) valid <= 0;

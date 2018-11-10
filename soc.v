@@ -1,5 +1,5 @@
 module soc (
-    clk, rst,
+    clk, rstn,
 
     iomem_valid,
     iomem_ready,
@@ -32,7 +32,7 @@ module soc (
     localparam RAM_WORDS = 1 << RAM_DEPTH;
 
     input clk;
-    input rst;
+    input rstn;
 
     output        iomem_valid;
     input         iomem_ready;
@@ -106,7 +106,7 @@ module soc (
         .RESET_PC(RESET_PC),
         .ICACHE_DEPTH(ICACHE_DEPTH)
     ) core (
-        .clk(clk), .rst(rst),
+        .clk(clk), .rstn(rstn),
         .mem_valid(mem_valid),
         .mem_ready(mem_ready),
         .mem_addr(mem_addr),
@@ -129,7 +129,7 @@ module soc (
 
     spimemio spimemio (
         .clk(clk),
-        .resetn(!rst),
+        .resetn(rstn),
         .valid(spimem_valid),
         .ready(spimem_ready),
         .addr(mem_addr[23:0]),
@@ -160,10 +160,10 @@ module soc (
 
     simpleuart simpleuart (
         .clk(clk),
-        .resetn(!rst),
+        .resetn(rstn),
 
-        .ser_tx(ser_tx      ),
-        .ser_rx(ser_rx      ),
+        .ser_tx(ser_tx),
+        .ser_rx(ser_rx),
 
         .reg_div_we(simpleuart_reg_div_sel ? mem_wstrb : 4'b 0000),
         .reg_div_di(mem_wdata),

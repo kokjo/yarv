@@ -1,6 +1,6 @@
 module arb (
     input clk,
-    input rst,
+    input rstn,
 
     // memory slave interface 0
     input mem0_valid,
@@ -54,7 +54,7 @@ module arb (
     always @ (posedge clk) state <= next_state;
 */
 
-    always @ (posedge clk) if(rst) begin
+    always @ (posedge clk) if(!rstn) begin
         state <= IDLE;
     end else begin
         case(state)

@@ -12,8 +12,8 @@ module hardware (
 );
     wire clk = clk_16mhz;
     reg [5:0] reset_cnt = 0;
-    wire rst = !(&reset_cnt);
-    always @ (posedge clk) reset_cnt = reset_cnt + rst;
+    wire rstn = &reset_cnt;
+    always @ (posedge clk) reset_cnt = reset_cnt + !rstn;
 
     wire flash_io0_oe, flash_io0_do, flash_io0_di;
     wire flash_io1_oe, flash_io1_do, flash_io1_di;
@@ -36,7 +36,7 @@ module hardware (
         .ICACHE_DEPTH(6),
         .RAM_DEPTH(11)
     ) soc (
-        .clk(clk), .rst(rst),
+        .clk(clk), .rstn(rstn),
         .iomem_valid(iomem_valid), .iomem_ready(iomem_ready),
         .iomem_addr(iomem_addr), .iomem_rdata(iomem_rdata),
         .iomem_wdata(iomem_wdata), .iomem_wstrb(iomem_wstrb),
@@ -74,7 +74,7 @@ module hardware (
     wire [31:0] gpio_di = 32'h00000000;
 
     mem_gpio gpio (
-        .clk(clk), .rst(rst),
+        .clk(clk), .rstn(rstn),
         .mem_valid(gpio_valid),
         .mem_ready(gpio_ready),
         .mem_addr(iomem_addr),

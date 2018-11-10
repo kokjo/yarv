@@ -1,6 +1,6 @@
 module decode (
     // control signals
-    clk, rst, hlt,
+    clk, rstn, hlt,
     // pipeline input
     instruction, inpc,
     // pipeline output,
@@ -17,7 +17,7 @@ module decode (
     // pc for next stage
     outpc
 );
-    input clk, rst, hlt;
+    input clk, rstn, hlt;
     input [31:0] instruction;
     input [31:0] inpc;
     output reg [31:0] imms;
@@ -68,7 +68,7 @@ module decode (
     wire [31:0] immJu = {11'd0, immJw};
     wire [31:0] immJs = {{11{immJw[20]}}, immJw};
 
-    always @ (posedge clk) if(rst) begin
+    always @ (posedge clk) if(!rstn) begin
         imms <= 32'd0; immu <= 32'd0;
         opcode <= 7'd0; rd <= 5'd0; funct3 <= 3'd0;
         rs1 <= 5'd0; rs2 <= 5'd0; funct7 <= 7'd0;

@@ -1,6 +1,6 @@
 module execute (
     // control signals
-    clk, rst, hlt,
+    clk, rstn, hlt,
     // pipeline input 
     // decoded immediates
     imms, immu,
@@ -27,7 +27,7 @@ module execute (
     mem_wdata,
     mem_wstrb,
 );
-    input clk, rst, hlt;
+    input clk, rstn, hlt;
 
     input [31:0] imms;
     input [31:0] immu;
@@ -74,7 +74,7 @@ module execute (
     wire [31:0] r2;
 
     registers regs (
-        .clk(clk), .rst(rst), .hlt(hlt),
+        .clk(clk), .rstn(rstn), .hlt(hlt),
         .rs1(rs1), .r1(r1), .rs2(rs2), .r2(r2),
         .rd(rd), .wdata(result), .write(write)
     );
@@ -95,7 +95,7 @@ module execute (
     );
 
     mem mem (
-        .clk(clk), .rst(rst), .hlt(hlt),
+        .clk(clk), .rstn(rstn), .hlt(hlt),
         .flush(flush),
         .load(load), .store(store),
         .r1(r1), .r2(r2), .funct3(funct3),
@@ -115,7 +115,7 @@ module execute (
     wire [31:0] sys_newpc;
 
     system sys (
-        .clk(clk), .hlt(hlt || flush != 0), .rst(rst),
+        .clk(clk), .hlt(hlt || flush != 0), .rstn(rstn),
         .system(system), .exception(1'b0), .cause(32'h00000000),
         .pc(inpc), .rd(rd), .funct3(funct3), .rs1(rs1), .r1(r1), .immu(immu),
         .result(sys_result),
@@ -130,7 +130,7 @@ module execute (
     assign override = (flush == 0) & ((branch & branch_taken) | jal | jalr | sys_override);
     assign fault = (flush == 0) & invalid;
 
-    always @ (posedge clk) if(rst) begin
+    always @ (posedge clk) if(!rstn) begin
         flush <= 2;
     end else if(!hlt) begin
         flush <= (flush == 0) ? (override ? 2 : flush) : flush - 1;
@@ -138,11 +138,11 @@ module execute (
 endmodule
 
 module registers (
-    clk, rst, hlt,
+    clk, rstn, hlt,
     rs1, r1, rs2, r2,
     rd, wdata, write,
 );
-    input clk, rst, hlt;
+    input clk, rstn, hlt;
     input [4:0] rs1;
     output [31:0] r1;
     input [4:0] rs2;
@@ -206,7 +206,7 @@ module alu (arg0, arg1u, arg1s, funct3, funct7, alur, result);
 endmodule
 
 module mem (
-    clk, rst, hlt,
+    clk, rstn, hlt,
     flush,
     load, store,
     r1, r2, funct3,
@@ -218,7 +218,7 @@ module mem (
 );
     input clk;
     input hlt;
-    input rst;
+    input rstn;
     input [1:0] flush;
 
     input load, store;
@@ -270,7 +270,7 @@ module mem (
                   : word_access ? word_result
                   : rdata;
 
-    always @ (posedge clk) if(rst) begin
+    always @ (posedge clk) if(!rstn) begin
         mem_done <= 0;
         rdata_latch <= 0;
     end else begin
@@ -286,13 +286,13 @@ module mem (
 endmodule
 
 module system (
-    clk, rst, hlt,
+    clk, rstn, hlt,
     system, exception, cause,
     pc, rd, funct3, rs1, r1, immu,
     result, write,
     newpc, override
 );
-    input clk, rst, hlt;
+    input clk, rstn, hlt;
     input system;
     input exception;
     input [31:0] cause;
@@ -335,7 +335,7 @@ module system (
     assign mepc_wdata = pc;
 
     csr csr (
-        .clk(clk), .rst(rst), .hlt(hlt),
+        .clk(clk), .rstn(rstn), .hlt(hlt),
         .csr(csr_addr),
         .read(csr_read),
         .rdata(csr_rdata),
@@ -348,7 +348,7 @@ module system (
 endmodule 
 
 module csr (
-    clk, rst, hlt,
+    clk, rstn, hlt,
     // CSR read/write interface
     csr,
     read, rdata,
@@ -359,7 +359,7 @@ module csr (
     mcause,
     mtvec
 );
-    input clk, rst, hlt;
+    input clk, rstn, hlt;
     input [11:0] csr;
     input read;
     output [31:0] rdata;
@@ -398,7 +398,7 @@ module csr (
                  : (csr == MCAUSE) ? mcause
                  : 32'h00000000;
 
-    always @ (posedge clk) if(rst) begin
+    always @ (posedge clk) if(!rstn) begin
         mscratch <= 0;
         mcause <= 0;
         mepc <= 0;
