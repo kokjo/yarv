@@ -32,16 +32,17 @@ void main() {
 
     // blink the user LED
     uint32_t led_timer = 0;
-    reg_uart_div = 20;
+    reg_uart_div = 139;
        
 //    reg_spi_cfg = (reg_spi_cfg & ~0x007F0000) | 0x00400000;
     reg_gpio_oe = 0x00000001;
+    reg_gpio_alt = (1 << 4) | (1 << 3);
 
     put_str("Hello, World!\n");
 
     asm("fence");
     while (1) {
-        reg_gpio_do = (led_timer >> 16) & 1;
+        reg_gpio_do = (led_timer  >> 16) & 1;
         led_timer = led_timer + 1;
     } 
 }

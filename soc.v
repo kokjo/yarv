@@ -24,7 +24,10 @@ module soc (
     flash_io0_di,
     flash_io1_di,
     flash_io2_di,
-    flash_io3_di
+    flash_io3_di,
+    
+    ser_tx,
+    ser_rx
 );
     parameter RAM_DEPTH = 8;
     parameter ICACHE_DEPTH = 8;
@@ -58,6 +61,9 @@ module soc (
     input  flash_io1_di;
     input  flash_io2_di;
     input  flash_io3_di;
+
+    output ser_tx;
+    input ser_rx;
 
     wire [31:0] mem_addr;
     wire [31:0] mem_wdata;

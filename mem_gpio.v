@@ -7,7 +7,7 @@ module mem_gpio (
     gpio_oe, gpio_do, gpio_di,
     alt_oe, alt_do, alt_di
 );
-    parameter ALT = 0;
+    parameter ALT = 1;
 
     input clk, rstn;
 
