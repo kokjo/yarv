@@ -12,3 +12,4 @@ rom.v
 *.map
 *.json
 *.hex
+*_syn.v

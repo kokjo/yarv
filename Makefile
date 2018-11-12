@@ -5,6 +5,7 @@ IVERILOG=iverilog
 HARDWARE=hardware.v soc.v spimemio.v simpleuart.v
 SOURCES=ram.v fetch.v decode.v execute.v cache.v arb.v core.v mem_gpio.v
 TESTBENCH=testbench.v rom.v
+FIRMWARE=start.S firmware.c printf.c
 
 all: hardware.asc testbench.vcd hardware.bin hardware.rpt
 
@@ -20,14 +21,17 @@ rom.v: firmware.bin generate_rom.py
 firmware.bin: firmware.elf
 	$(OBJCOPY) -O binary firmware.elf firmware.bin
 
-firmware.elf: sections.lds firmware.c start.S
-	$(CC) -march=rv32i -nostartfiles -Wl,-Bstatic,-T,sections.lds,--strip-debug,-Map=firmware.map,--cref -ffreestanding -nostdlib -o firmware.elf start.S firmware.c
+firmware.elf: sections.lds $(FIRMWARE)
+	$(CC) -march=rv32i -nostartfiles -Wl,-Bstatic,-T,sections.lds,--strip-debug,-Map=firmware.map,--cref -ffreestanding -o firmware.elf $(FIRMWARE)
 
 firmware.hex: firmware.elf
 	riscv32-unknown-elf-objcopy -O verilog firmware.elf firmware.hex
 
 hardware.blif: $(HARDWARE) $(SOURCES)
 	yosys -p 'synth_ice40 -top hardware -blif hardware.blif -json hardware.json' $(HARDWARE) $(SOURCES) 
+
+hardware_syn.v: hardware.blif
+	yosys -p 'read_blif -wideports hardware.blif; write_verilog hardware_syn.v'
 
 hardware.asc: hardware.blif
 	arachne-pnr -r -d 8k -P cm81 -o hardware.asc -p hardware.pcf hardware.blif

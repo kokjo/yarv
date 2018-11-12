@@ -50,7 +50,7 @@ module hardware (
     wire ser_rx;
 
     soc #(
-        .ICACHE_DEPTH(2),
+        .ICACHE_DEPTH(6),
         .RAM_DEPTH(11)
     ) soc (
         .clk(clk), .rstn(rstn),

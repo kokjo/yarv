@@ -371,7 +371,7 @@ module csr (
     input mepc_write;
     input [31:0] mepc_wdata;
     output reg [31:0] mcause;
-    output [31:0] mtvec;
+    output reg [31:0] mtvec;
 
     localparam MSTATUS    = 12'h300;
     localparam MISA       = 12'h301;
@@ -388,25 +388,25 @@ module csr (
     localparam MTIP       = 12'h344;
 
     parameter MISA_VALUE  = 32'h00000000;
-    parameter MTVEC_VALUE = 32'h00050004;
-
-    assign mtvec = MTVEC_VALUE;
     
     assign rdata = (csr == MISA) ? MISA_VALUE
                  : (csr == MSCRATCH) ? mscratch
                  : (csr == MEPC) ? mepc
                  : (csr == MCAUSE) ? mcause
+                 : (csr == MTVEC) ? mtvec
                  : 32'h00000000;
 
     always @ (posedge clk) if(!rstn) begin
         mscratch <= 0;
         mcause <= 0;
         mepc <= 0;
+        mtvec <= 0;
     end else if(!hlt) begin
         if(write) case(csr)
             MSCRATCH: mscratch <= wdata;
             MEPC: mepc <= wdata;
             MCAUSE: mcause <= wdata;
+            MTVEC: mtvec <= wdata;
         endcase
         if(mepc_write) mepc <= mepc_wdata;
     end

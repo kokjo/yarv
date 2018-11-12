@@ -36,7 +36,7 @@ module hardware_tb;
         $dumpfile("hardware_tb.vcd");
         $dumpvars(0, hardware_tb);
 
-        repeat (10) begin
+        repeat (100) begin
             repeat (10000) @(posedge clk);
             $display("+10000 cycles");
         end
