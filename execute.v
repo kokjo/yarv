@@ -22,7 +22,7 @@ module execute (
     // load/store signals
     output mem_valid, input mem_ready,
     output [31:0] mem_addr, input [31:0] mem_rdata,
-    output [31:0] mem_wdata, output [3:0] mem_wstrb,
+    output [31:0] mem_wdata, output [3:0] mem_wstrb
 );
     wire [31:0] alu_result;
     wire [31:0] mem_result;
@@ -240,20 +240,30 @@ module system (
     localparam CSRRSI = 3'b110;
     localparam CSRRCI = 3'b111;
 
+    localparam MRET = 12'b001100000010;
+    localparam ECALL = 12'b000000000000;
+    localparam EBREAK = 12'b000000000001;
+
+    wire ecall  = system && funct3 == PRIV && immu[11:0] == ECALL;
+    wire ebreak = system && funct3 == PRIV && immu[11:0] == EBREAK;
+    wire mret   = system && funct3 == PRIV && immu[11:0] == MRET;
+    wire csrrw  = system && funct3 == CSRRW;
+    wire csrrs  = system && funct3 == CSRRS;
+    wire csrrc  = system && funct3 == CSRRC;
+    wire csrrwi = system && funct3 == CSRRWI;
+    wire csrrsi = system && funct3 == CSRRSI;
+    wire csrrci = system && funct3 == CSRRCI;
+
     wire [11:0] csr_addr = immu[11:0];
-    wire csr_read = system && rd != 0 && (
-        funct3 == CSRRW || funct3 == CSRRS || funct3 == CSRRC ||
-        funct3 == CSRRWI || funct3 == CSRRSI || funct3 == CSRRSI);
+    wire csr_read = rd != 0 && (csrrw || csrrs || csrrc || csrrwi || csrrsi || csrrci);
     wire [31:0] csr_rdata;
-    wire csr_write = system && (
-        funct3 == CSRRW || ((funct3 == CSRRS || funct3 == CSRRC) && rs1 != 0) ||
-        funct3 == CSRRWI || ((funct3 == CSRRSI || funct3 == CSRRCI) && rs1 != 0));
-    wire [31:0] csr_wdata = funct3 == CSRRW ? r1
-                          : funct3 == CSRRS ? (csr_rdata | r1)
-                          : funct3 == CSRRC ? (csr_rdata & ~r1)
-                          : funct3 == CSRRWI ? rs1
-                          : funct3 == CSRRSI ? (csr_rdata | rs1)
-                          : funct3 == CSRRCI ? (csr_rdata & ~rs1)
+    wire csr_write = system && (csrrw || csrrwi || ((csrrs || csrrc || csrrsi || csrrci) && rs1 != 0));
+    wire [31:0] csr_wdata = csrrw  ? r1
+                          : csrrs  ? (csr_rdata | r1)
+                          : csrrc  ? (csr_rdata & ~r1)
+                          : csrrwi ? rs1
+                          : csrrsi ? (csr_rdata | rs1)
+                          : csrrci ? (csr_rdata & ~rs1)
                           : 32'hxxxxxxxx;
     wire [31:0] mepc;
     wire mepc_write;
@@ -263,16 +273,12 @@ module system (
     assign result = csr_rdata;
     assign write = system && funct3 == 3'b001;
 
-    assign mret   = system && funct3 == 3'b000 && immu[11:0] == 12'b001100000010;
-    assign ecall  = system && funct3 == 3'b000 && immu[11:0] == 12'b000000000000;
-    assign ebreak = system && funct3 == 3'b000 && immu[11:0] == 12'b000000000001;
-
     assign exc = exception || ecall || ebreak;
 
     assign override = (exc || mret);
     assign newpc = exc ? mtvec
                  : mret ? mepc
-                 : 32'h00000000 ;
+                 : 32'hxxxxxxxx;
 
     assign mepc_write = exc;
     assign mepc_wdata = pc;
