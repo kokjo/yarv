@@ -36,6 +36,9 @@ void uart_printf(char *fmtstr, ...){
     va_printf(&uart.out, fmtstr, va);
 }
 
+int do_rdcycle();
+int do_rdinstret();
+
 void main() {
     // zero out .bss section
     for (uint32_t *dest = &_sbss; dest < &_ebss;) {
@@ -46,7 +49,7 @@ void main() {
     uint32_t led_timer = 0;
     reg_uart_div = 139;
        
-    reg_spi_cfg = (reg_spi_cfg & ~0x007F0000) | 0x00400000;
+    //reg_spi_cfg = (reg_spi_cfg & ~0x007F0000) | 0x00400000;
     reg_gpio_oe = 0x00000001;
     reg_gpio_do = 0;
     reg_gpio_alt = (1 << 4) | (1 << 3);
@@ -55,7 +58,7 @@ void main() {
     asm("fence");
     while (1) {
         if(led_timer & 0x10000) {
-            uart_printf("Iteration %d\n", num++);
+            uart_printf("Iteration %d (rdcycle = %d, rdinstret = %d)\n", num++, do_rdcycle(), do_rdinstret());
             reg_gpio_do ^= 1;
             led_timer = 0;
         }

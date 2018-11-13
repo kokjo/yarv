@@ -1,25 +1,13 @@
 module fetch(
-    clk, rstn, hlt,
-    override, newpc,
-    mem_valid, mem_addr, mem_rdata,
-    instruction, outpc
-);
     // control signals
-    input clk, rstn, hlt;
-
+    input clk, input rstn, input hlt,
     // branch control
-    input override;
-    input [31:0] newpc;
-
+    input override, input [31:0] newpc,
     // memory read interface
-    output mem_valid;
-    output [31:0] mem_addr;
-    input [31:0] mem_rdata;
-
+    output mem_valid, output [31:0] mem_addr, input [31:0] mem_rdata,
     // pipeline registers
-    output reg [31:0] instruction;
-    output reg [31:0] outpc;
-
+    output reg [31:0] instruction, output reg [31:0] outpc
+);
     wire [31:0] pc;
     wire [31:0] next_pc;
     
@@ -47,13 +35,10 @@ module fetch(
 endmodule
 
 module programcounter (
-    clk, rstn, hlt, override, newpc, pc
+    input clk, input rstn, input hlt,
+    input override, input [31:0] newpc,
+    output reg [31:0] pc
 );
-    input clk, rstn, hlt;
-    input override;
-    input [31:0] newpc;
-    output reg [31:0] pc;
-
     parameter RESET_PC = 32'h00000000;
 
     always @ (posedge clk) if(!rstn) begin

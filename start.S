@@ -6,8 +6,10 @@
 // means.
 
 .section .text
-_vectors:
-	j reset
+.global reset
+.global do_rdcycle
+.global do_rdinstret
+.global exception_handler
 
 reset:
 	/* zero-initialize all registers */
@@ -23,6 +25,14 @@ reset:
     call main
 loop:
     j loop
+
+do_rdcycle:
+    csrrw a0, cycle, a0
+    ret
+
+do_rdinstret:
+    csrrw a0, instret, a0
+    ret
 
 exception_handler:
     csrrw x1, mscratch, x1

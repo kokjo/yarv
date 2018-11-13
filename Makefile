@@ -7,7 +7,7 @@ SOURCES=ram.v fetch.v decode.v execute.v cache.v arb.v core.v mem_gpio.v
 TESTBENCH=testbench.v rom.v
 FIRMWARE=start.S firmware.c printf.c
 
-all: hardware.asc testbench.vcd hardware.bin hardware.rpt
+all: hardware.bin hardware.rpt hardware_tb.vcd hardware_syn.v
 
 testbench.vcd: testbench
 	./testbench
@@ -22,7 +22,7 @@ firmware.bin: firmware.elf
 	$(OBJCOPY) -O binary firmware.elf firmware.bin
 
 firmware.elf: sections.lds $(FIRMWARE)
-	$(CC) -march=rv32i -nostartfiles -Wl,-Bstatic,-T,sections.lds,--strip-debug,-Map=firmware.map,--cref -ffreestanding -o firmware.elf $(FIRMWARE)
+	$(CC) -O3 -march=rv32i -nostartfiles -Wl,-Bstatic,-T,sections.lds,--strip-debug,-Map=firmware.map,--cref -ffreestanding -o firmware.elf $(FIRMWARE)
 
 firmware.hex: firmware.elf
 	riscv32-unknown-elf-objcopy -O verilog firmware.elf firmware.hex

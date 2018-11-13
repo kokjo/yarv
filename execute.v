@@ -1,62 +1,34 @@
 module execute (
     // control signals
-    clk, rstn, hlt,
+    input clk, input rstn, input hlt,
     // pipeline input 
     // decoded immediates
-    imms, immu,
+    input [31:0] imms, input [31:0] immu,
     // instruction parts,
-    opcode, rd, funct3, rs1, rs2, funct7,
+    input [6:0] opcode, input [4:0] rd, input [2:0] funct3,
+    input [4:0] rs1, input [4:0] rs2, input [6:0] funct7,
     // individual opcodes
-    load, fence, alui, auipc,
-    store, alur, lui, branch,
-    jalr, jal, system,
+    input load, input fence, input alui, input auipc,
+    input store, input alur, input lui, input branch,
+    input jalr, input jal, input system,
     // instruction decode fail
-    invalid, unknown,
+    input invalid, input unknown,
     // pc for next stage
-    inpc,
+    input [31:0] inpc,
     // branch control signals
-    override,
-    newpc,
+    output override, output [31:0] newpc,
     // fault control signal
-    fault,
+    output fault,
     // load/store signals
-    mem_valid,
-    mem_ready,
-    mem_addr,
-    mem_rdata,
-    mem_wdata,
-    mem_wstrb,
+    output mem_valid, input mem_ready,
+    output [31:0] mem_addr, input [31:0] mem_rdata,
+    output [31:0] mem_wdata, output [3:0] mem_wstrb,
 );
-    input clk, rstn, hlt;
-
-    input [31:0] imms;
-    input [31:0] immu;
-    input [6:0] opcode;
-    input [4:0] rd;
-    input [2:0] funct3;
-    input [4:0] rs1;
-    input [4:0] rs2;
-    input [6:0] funct7;
-    input load, fence, alui, auipc;
-    input store, alur, lui, branch;
-    input jalr, jal, system;
-    input invalid, unknown;
-    input [31:0] inpc;
-
-    output override;
-    output [31:0] newpc;
-    output fault;
-
-    output mem_valid;
-    input mem_ready;
-    output [31:0] mem_addr;
-    input [31:0] mem_rdata;
-    output [31:0] mem_wdata;
-    output [3:0] mem_wstrb;
-
     wire [31:0] alu_result;
     wire [31:0] mem_result;
     wire branch_taken;
+
+    reg [1:0] flush;
 
     wire [31:0] result = auipc ? inpc + imms
                        : lui ? imms 
@@ -66,7 +38,6 @@ module execute (
                        : system ? sys_result
                        : 32'h00000000;
 
-    reg [1:0] flush;
 
     wire write = !hlt && flush == 0
                && (load||alui||auipc||alur||lui||jalr||jal||(system && sys_write));
@@ -138,19 +109,10 @@ module execute (
 endmodule
 
 module registers (
-    clk, rstn, hlt,
-    rs1, r1, rs2, r2,
-    rd, wdata, write,
+    input clk, input rstn, input hlt,
+    input [4:0] rs1, output [31:0] r1, input [4:0] rs2, output [31:0] r2,
+    input [4:0] rd, input [31:0] wdata, input write
 );
-    input clk, rstn, hlt;
-    input [4:0] rs1;
-    output [31:0] r1;
-    input [4:0] rs2;
-    output [31:0] r2;
-    input [4:0] rd;
-    input [31:0] wdata;
-    input write;
-    
     reg [31:0] regs[0:31];
 
     assign r1 = rs1 ? regs[rs1] : 32'h00000000;
@@ -160,25 +122,21 @@ module registers (
     always @ (posedge clk) if(write) regs[rd] <= wdata;
 endmodule
 
-module cmp (arg0, arg1, funct3, result);
-    input [31:0] arg0;
-    input [31:0] arg1;
-    input [2:0] funct3;
-    output result;
+module cmp (
+    input [31:0] arg0, input [31:0] arg1, input [2:0] funct3, output result
+);
     wire eq = arg0 == arg1;
     wire ne = arg0 != arg1;
     wire gtu = arg0 > arg1;
     wire ltu = arg0 < arg1;
     wire gt = $signed(arg0) > $signed(arg1);
     wire lt = $signed(arg0) < $signed(arg1);
-    wire ge = eq || gt;
-    wire geu = eq || gtu;
     assign result = funct3 == 0 ? eq
                   : funct3 == 1 ? ne
                   : funct3 == 4 ? lt
-                  : funct3 == 5 ? ge
+                  : funct3 == 5 ? (eq || gt)
                   : funct3 == 6 ? ltu
-                  : funct3 == 7 ? geu
+                  : funct3 == 7 ? (eq || gtu)
                   : 0 ;
 endmodule
 
@@ -206,36 +164,16 @@ module alu (arg0, arg1u, arg1s, funct3, funct7, alur, result);
 endmodule
 
 module mem (
-    clk, rstn, hlt,
-    flush,
-    load, store,
-    r1, r2, funct3,
-    imms,
-    mem_valid, mem_ready,
-    mem_addr,mem_rdata,
-    mem_wdata, mem_wstrb,
-    result
+    input clk, input rstn, input hlt,
+    input [1:0] flush,
+    input load, input store,
+    input [31:0] r1, input [31:0] r2, input [2:0] funct3,
+    input [31:0] imms,
+    output mem_valid, input mem_ready,
+    output [31:0] mem_addr, input [31:0] mem_rdata,
+    output [31:0] mem_wdata, output [3:0] mem_wstrb,
+    output [31:0] result
 );
-    input clk;
-    input hlt;
-    input rstn;
-    input [1:0] flush;
-
-    input load, store;
-    input [31:0] r1;
-    input [31:0] r2;
-    input [2:0] funct3;
-    input [31:0] imms;
-
-    output mem_valid;
-    input mem_ready;
-    output [31:0] mem_addr;
-    input [31:0] mem_rdata;
-    output [31:0] mem_wdata;
-    output [3:0] mem_wstrb;
-    
-    output [31:0] result;
-
     reg mem_done;
     reg [31:0] rdata_latch;
     wire [31:0] rdata = mem_done ? rdata_latch : mem_rdata;
@@ -286,32 +224,37 @@ module mem (
 endmodule
 
 module system (
-    clk, rstn, hlt,
-    system, exception, cause,
-    pc, rd, funct3, rs1, r1, immu,
-    result, write,
-    newpc, override
+    input clk, input rstn, input hlt,
+    input system, input exception, input [31:0] cause,
+    input [31:0] pc,
+    input [4:0] rd, input [2:0] funct3, input [4:0] rs1, input [31:0] r1, input [31:0] immu,
+    output [31:0] result, output write,
+    output [31:0] newpc, output override
 );
-    input clk, rstn, hlt;
-    input system;
-    input exception;
-    input [31:0] cause;
-    input [31:0] pc;
-    input [4:0] rd;
-    input [2:0] funct3;
-    input [4:0] rs1;
-    input [31:0] r1;
-    input [31:0] immu;
-    output [31:0] result; 
-    output write;
-    output [31:0] newpc;
-    output override;
+
+    localparam PRIV = 3'b000;
+    localparam CSRRW = 3'b001;
+    localparam CSRRS = 3'b010;
+    localparam CSRRC = 3'b011;
+    localparam CSRRWI = 3'b101;
+    localparam CSRRSI = 3'b110;
+    localparam CSRRCI = 3'b111;
 
     wire [11:0] csr_addr = immu[11:0];
-    wire csr_read = system && funct3 == 3'b001 && rd != 0;
+    wire csr_read = system && rd != 0 && (
+        funct3 == CSRRW || funct3 == CSRRS || funct3 == CSRRC ||
+        funct3 == CSRRWI || funct3 == CSRRSI || funct3 == CSRRSI);
     wire [31:0] csr_rdata;
-    wire csr_write = system && funct3 == 3'b001;
-    wire [31:0] csr_wdata = r1;
+    wire csr_write = system && (
+        funct3 == CSRRW || ((funct3 == CSRRS || funct3 == CSRRC) && rs1 != 0) ||
+        funct3 == CSRRWI || ((funct3 == CSRRSI || funct3 == CSRRCI) && rs1 != 0));
+    wire [31:0] csr_wdata = funct3 == CSRRW ? r1
+                          : funct3 == CSRRS ? (csr_rdata | r1)
+                          : funct3 == CSRRC ? (csr_rdata & ~r1)
+                          : funct3 == CSRRWI ? rs1
+                          : funct3 == CSRRSI ? (csr_rdata | rs1)
+                          : funct3 == CSRRCI ? (csr_rdata & ~rs1)
+                          : 32'hxxxxxxxx;
     wire [31:0] mepc;
     wire mepc_write;
     wire [31:0] mepc_wdata;
@@ -348,30 +291,17 @@ module system (
 endmodule 
 
 module csr (
-    clk, rstn, hlt,
+    input clk, input rstn, input hlt,
     // CSR read/write interface
-    csr,
-    read, rdata,
-    write, wdata,
+    input [11:0] csr,
+    input read, output [31:0] rdata,
+    input write, input [31:0] wdata,
     // CSR values
-    mscratch,
-    mepc, mepc_write, mepc_wdata,
-    mcause,
-    mtvec
+    output reg [31:0] mscratch,
+    output reg [31:0] mepc, input mepc_write, input [31:0] mepc_wdata,
+    output reg [31:0] mcause, 
+    output reg [31:0] mtvec
 );
-    input clk, rstn, hlt;
-    input [11:0] csr;
-    input read;
-    output [31:0] rdata;
-    input write;
-    output [31:0] wdata;
-
-    output reg [31:0] mscratch;
-    output reg [31:0] mepc;
-    input mepc_write;
-    input [31:0] mepc_wdata;
-    output reg [31:0] mcause;
-    output reg [31:0] mtvec;
 
     localparam MSTATUS    = 12'h300;
     localparam MISA       = 12'h301;
@@ -387,14 +317,29 @@ module csr (
     localparam MTVAL      = 12'h343;
     localparam MTIP       = 12'h344;
 
+    localparam CYCLE      = 12'hc00;
+    localparam TIME       = 12'hc01;
+    localparam INSTRET    = 12'hc02;
+
+    localparam CYCLEH     = 12'hc80;
+    localparam TIMEH      = 12'hc81;
+    localparam INSTRETH   = 12'hc82;
+
     parameter MISA_VALUE  = 32'h00000000;
+
+    reg [63:0] cycle;
+    reg [63:0] instret;
     
     assign rdata = (csr == MISA) ? MISA_VALUE
                  : (csr == MSCRATCH) ? mscratch
                  : (csr == MEPC) ? mepc
                  : (csr == MCAUSE) ? mcause
                  : (csr == MTVEC) ? mtvec
-                 : 32'h00000000;
+                 : (csr == CYCLE) ? cycle[31:0]
+                 : (csr == INSTRET) ? instret[31:0]
+                 : (csr == CYCLEH) ? cycle[63:32]
+                 : (csr == INSTRET) ? instret[63:32]
+                 : 32'hxxxxxxxx;
 
     always @ (posedge clk) if(!rstn) begin
         mscratch <= 0;
@@ -409,5 +354,13 @@ module csr (
             MTVEC: mtvec <= wdata;
         endcase
         if(mepc_write) mepc <= mepc_wdata;
+    end
+
+    always @ (posedge clk) if(!rstn) begin
+        cycle <= 64'd0;
+        instret <= 64'd0;
+    end else begin
+        cycle <= cycle + 1;
+        if(!hlt) instret <= instret + 1;
     end
 endmodule

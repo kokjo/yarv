@@ -1,39 +1,23 @@
 module decode (
     // control signals
-    clk, rstn, hlt,
+    input clk, input rstn, input hlt,
     // pipeline input
-    instruction, inpc,
+    input [31:0] instruction, input [31:0] inpc,
     // pipeline output,
     // decoded immediates
-    imms, immu,
+    output reg [31:0] imms, output reg [31:0] immu,
     // instruction parts,
-    opcode, rd, funct3, rs1, rs2, funct7,
+    output reg [6:0] opcode, output reg [4:0] rd, output reg [2:0] funct3,
+    output reg [4:0] rs1, output reg [4:0] rs2, output reg [6:0] funct7,
     // individual opcodes
-    load, fence, alui, auipc,
-    store, alur, lui, branch,
-    jalr, jal, system,
+    output reg load, output reg fence, output reg alui, output reg auipc,
+    output reg store, output reg alur, output reg lui, output reg branch,
+    output reg jalr, output reg jal, output reg system,
     // fault signals
-    invalid, unknown,
+    output reg invalid, output reg unknown,
     // pc for next stage
-    outpc
+    output reg [31:0] outpc
 );
-    input clk, rstn, hlt;
-    input [31:0] instruction;
-    input [31:0] inpc;
-    output reg [31:0] imms;
-    output reg [31:0] immu;
-    output reg [6:0] opcode;
-    output reg [4:0] rd;
-    output reg [2:0] funct3;
-    output reg [4:0] rs1;
-    output reg [4:0] rs2;
-    output reg [6:0] funct7;
-    output reg load, fence, alui, auipc;
-    output reg store, alur, lui, branch;
-    output reg jalr, jal, system;
-    output reg invalid, unknown;
-    output reg [31:0] outpc;
-
     wire load_w, fence_w, alui_w, auipc_w;
     wire store_w, alur_w, lui_w, branch_w;
     wire jalr_w, jal_w, system_w;
