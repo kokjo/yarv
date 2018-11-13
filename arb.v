@@ -19,12 +19,12 @@ module arb (
     input [3:0] mem1_wstrb,
 
     // memory master interface
-    output mem_valid,
+    output reg mem_valid,
     input mem_ready,
-    output [31:0] mem_addr,
+    output reg [31:0] mem_addr,
     input [31:0] mem_rdata,
-    output [31:0] mem_wdata,
-    output [3:0] mem_wstrb
+    output reg [31:0] mem_wdata,
+    output reg [3:0] mem_wstrb
 );
     localparam IDLE = 0;
     localparam SLAVE0 = 1;
@@ -32,10 +32,10 @@ module arb (
 
     reg [1:0] state = IDLE;
 
-    assign mem_valid = state == SLAVE0 || state == SLAVE1;
-    assign mem_addr  = state == SLAVE0 ? mem0_addr : mem1_addr;
-    assign mem_wdata = state == SLAVE0 ? mem0_wdata : mem1_wdata;
-    assign mem_wstrb = state == SLAVE0 ? mem0_wstrb : mem1_wstrb;
+    //assign mem_valid = state == SLAVE0 || state == SLAVE1;
+    //assign mem_addr  = state == SLAVE0 ? mem0_addr : mem1_addr;
+    //assign mem_wdata = state == SLAVE0 ? mem0_wdata : mem1_wdata;
+    //assign mem_wstrb = state == SLAVE0 ? mem0_wstrb : mem1_wstrb;
 
     assign mem0_ready = state == SLAVE0 && mem_ready;
     assign mem0_rdata = mem_rdata;
@@ -59,13 +59,37 @@ module arb (
     end else begin
         case(state)
             IDLE: begin
-                if(mem1_valid) state <= SLAVE1;
-                if(mem0_valid) state <= SLAVE0;
+                if(mem1_valid) begin
+                    mem_valid <= 1;
+                    mem_addr <= mem1_addr;
+                    mem_wdata <= mem1_wdata;
+                    mem_wstrb <= mem1_wstrb;
+                    state <= SLAVE1;
+                end
+                if(mem0_valid) begin
+                    mem_valid <= 1;
+                    mem_addr <= mem0_addr;
+                    mem_wdata <= mem0_wdata;
+                    mem_wstrb <= mem0_wstrb;
+                    state <= SLAVE0;
+                end
             end
             SLAVE0:
-                if(mem_ready) state <= mem1_valid ? SLAVE1 : IDLE;
+                if(mem_ready) begin
+                    mem_valid <= 0;
+                    mem_addr <= 32'hxxxxxxxx;
+                    mem_wdata <= 32'hxxxxxxxx;
+                    mem_wstrb <= 32'hxxxxxxxx;
+                    state <= IDLE;
+                end
             SLAVE1:
-                if(mem_ready) state <= mem0_valid ? SLAVE0 : IDLE;
+                if(mem_ready) begin
+                    mem_valid <= 0;
+                    mem_addr <= 32'hxxxxxxxx;
+                    mem_wdata <= 32'hxxxxxxxx;
+                    mem_wstrb <= 32'hxxxxxxxx;
+                    state <= IDLE;
+                end
         endcase
     end
 endmodule

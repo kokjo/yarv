@@ -40,7 +40,7 @@ hardware.asc: hardware.blif
 	icepack $< $@
 
 %.rpt: %.asc
-	icetime -d hx8k -c 16 -mtr $@ $<
+	icetime -d lp8k -c 16 -mtr $@ $<
 
 hardware_tb: $(SOURCES) $(HARDWARE) hardware_tb.v spiflash.v #firmware.hex
 	iverilog -s hardware_tb -o $@ $^ `yosys-config --datdir/ice40/cells_sim.v`
