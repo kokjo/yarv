@@ -52,6 +52,6 @@ program: hardware.bin firmware.bin
 	tinyprog -p hardware.bin -u firmware.bin
 
 clean:
-	rm -rf *.vcd *.bin *.elf *.o *.asc *.blif *.rpt *.hex hardware_tb testbench rom.v
+	rm -rf *.vcd *.bin *.elf *.o *.asc *.blif *.rpt *.hex *.map *.rpt *.json hardware_tb testbench rom.v hardware_syn.v
 
 .PHONY: program clean
